@@ -1,116 +1,93 @@
-\# IITB Insti-Assist — Project Write-up
+# IITB Insti-Assist — Project Write-up
 
+## 1. Chosen Scope and Why
 
+I chose the **Academic Assistant** scope, which focuses on course registration, grading policies, examination rules, and the academic calendar. Initially, I planned to build the **Hostel & Campus Life Assistant**, but after reviewing the available data sources, I found that the academic documents contained much more structured and precise information.
 
-\## 1. Chosen scope and why
+The rulebooks include well-defined policies such as grade codes (`DD`, `FF`, `FR`, `DX`), attendance requirements, registration rules, and exact penalties for academic malpractice. This type of factual, reference-based content is well suited for a Retrieval-Augmented Generation (RAG) system because retrieved answers can be easily verified against the original documents.
 
+---
 
+## 2. Data Sources Used
 
-I picked the \*\*Academic Assistant\*\* scope — course registration, grading policy, exam rules, and academic calendar. I actually started out planning to build the Hostel \& Campus Life assistant, but after looking at what data was available for each, I switched. The academic rulebooks turned out to have much more precise, lookup-style content (specific grade codes like DD/FF/FR/DX, exact attendance percentages, specific fine amounts for exam malpractice) compared to hostel documents, which were more scattered across individual hostel pages and less consistent in format. Precise, factual content like this is a better fit for RAG, since it's easy to verify whether the retrieved answer is actually correct.
+I used six official IIT Bombay documents obtained directly from the `acad.iitb.ac.in` and `iitb.ac.in` domains.
 
+1. **UG Rule Book (Academic Office)** – Registration categories, attendance rules, examination policies, and grading.
+2. **Academic Calendar 2026–27** – Semester schedule, registration dates, and important academic deadlines.
+3. **Grading System Document** – Meanings of letter grades such as `DD`, `FF`, `FR`, `DX`, `II`, and `AU`.
+4. **M.Tech/MPP/M.Des/MBA Academic Rules** – Postgraduate regulations including NPTEL/SWAYAM courses and course withdrawal.
+5. **UG Rule Book (Older Version)** – Additional undergraduate regulations and academic malpractice policies.
+6. **Disciplinary Actions for Academic Malpractice** – Official penalties for examination violations (e.g., carrying a mobile phone during an exam results in an `FR` grade).
 
+I intentionally limited the dataset to these six documents because many other rulebooks available online were near-duplicates. Including them would have increased retrieval redundancy without providing significant new information.
 
-\## 2. Data sources used
+---
 
+## 3. Chunking Strategy
 
+The documents were split using **fixed-size character chunking**, with each chunk containing **1000 characters** and an **overlap of 200 characters** between consecutive chunks.
 
-I used 6 official IIT Bombay documents, all pulled directly from `acad.iitb.ac.in` and `iitb.ac.in` domains (not third-party aggregator sites):
+I selected fixed-size chunking because the extracted PDF text did not preserve a reliable document structure. Section headers, bullet points, and numbered lists were often flattened during PDF extraction, making structure-aware chunking unreliable without significant preprocessing.
 
+The 200-character overlap helps preserve information that might otherwise be split across chunk boundaries. This ensures that important facts remain complete in at least one retrieved chunk.
 
+Across all six documents (approximately **257,000 characters**), this process generated **324 chunks**.
 
-1\. UG Rule Book (Academic Office) — registration categories, attendance rules, exam weightage
+---
 
-2\. Academic Calendar 2026–27 — semester dates, registration windows
+## 4. System Architecture
 
-3\. Grading System document — letter grades and their meaning (DD, FF, FR, DX, II, AU)
+- **PDF Extraction:** `pypdf`
+- **Embedding Model:** `sentence-transformers (all-MiniLM-L6-v2)`
+- **Vector Database:** `FAISS (IndexFlatL2)`
+- **Language Model:** Groq API using **Llama 3.1 8B Instant**
+- **Grounding Mechanism:** The model is instructed to return the exact token `NOT_FOUND_IN_DOCUMENTS` whenever the retrieved context does not contain the requested information. The application then converts this into a user-friendly message ("I don't know based on the available documents") without displaying misleading citations.
+- **User Interface:** Streamlit with a chat-style interface.
 
-4\. M.Tech/MPP/M.Des/MBA Rules — postgraduate-specific policies (NPTEL/SWAYAM courses, course withdrawal)
+---
 
-5\. UG Rule Book (older/full version) — broader undergraduate rules and academic malpractice overview
+## 5. Bonus Features Implemented
 
-6\. Disciplinary Actions for Academic Malpractice — exact penalties for specific violations (e.g. mobile phone in exam → FR grade)
+### Live PDF Upload
 
+Users can upload an additional PDF during a session. The uploaded document is chunked, embedded, and merged with the existing FAISS index for that session only. The original stored index remains unchanged.
 
+### Multi-turn Conversational Memory
 
-I deliberately kept this to 6 rather than adding more, since several other IITB rulebooks I found while searching were near-duplicates of documents I already had (IITB republishes similar rulebooks across years). Adding those would have added retrieval noise without adding new information.
+Follow-up questions such as *"What about FF?"* are automatically rewritten into complete, standalone questions using recent conversation history before retrieval. The final prompt also includes recent chat context, allowing the assistant to answer naturally in multi-turn conversations.
 
+---
 
+## 6. Known Limitations and Future Improvements
 
-\## 3. Chunking strategy and why
+Although the system performs well for factual academic queries, there are several areas for improvement.
 
+- **Fixed-size chunking** may split tables or numbered lists, reducing retrieval quality. Structure-aware chunking based on document sections could improve context preservation.
 
+- **No re-ranking stage** is currently used. The system retrieves the top four chunks directly from FAISS. Adding a cross-encoder re-ranker could improve retrieval accuracy.
 
-I used a fixed-size character chunking approach: \*\*1000 characters per chunk, with 200 characters of overlap\*\* between consecutive chunks.
+- **Duplicate retrievals** occasionally occur because the older and newer UG rulebooks contain similar content. Deduplicating highly similar chunks would increase retrieval diversity.
 
+- **Citation highlighting** currently displays the entire retrieved chunk rather than highlighting the exact sentence used to generate the answer.
 
+- **No caching** is implemented. Every query performs embedding, retrieval, and LLM inference even if the same question has already been asked.
 
-I chose fixed-size chunking over more complex approaches (like splitting by paragraph or by section headers) mainly for simplicity and reliability — the PDFs I extracted text from didn't have consistent, machine-readable structure (headers, bullet points, and numbered sections often got flattened into plain text during PDF extraction), so structure-aware chunking would have been unreliable without a lot of extra cleanup work.
+---
 
+## 7. Testing Performed
 
+The assistant was evaluated using multiple categories of queries.
 
-The 200-character overlap was important: without it, a fact that happens to sit right at a chunk boundary (e.g. "the fine for the second offense is Rs. 1000" split right after "is") would get cut and potentially lost from both chunks. The overlap means most important facts appear fully intact in at least one chunk.
+- **Single-document factual questions**
+  - Example: *"What grade is awarded if a student is caught with a mobile phone during an examination?"*
+  - The system correctly retrieved the disciplinary rules and answered **FR grade**.
 
+- **Multi-document reasoning**
+  - Example: Comparing the meanings and implications of **FR** and **DX** grades using information from multiple documents.
 
+- **Out-of-scope questions**
+  - Example: *"How are you ?"*
+  - The system correctly returned an "I don't know based on the available documents" response instead of hallucinating an answer.
 
-With 6 documents totaling roughly 257,000 characters, this produced 324 chunks total.
-
-
-
-\## 4. System architecture
-
-
-
-\- \*\*Extraction:\*\* `pypdf` to pull raw text out of each PDF
-
-\- \*\*Embedding:\*\* `sentence-transformers` (`all-MiniLM-L6-v2`) — a free, local embedding model, so no per-query embedding cost
-
-\- \*\*Vector storage/search:\*\* FAISS (`IndexFlatL2`), storing all 324 chunk embeddings and doing brute-force nearest-neighbor search (fine at this scale — no need for approximate search methods)
-
-\- \*\*LLM:\*\* Groq API running Llama 3.1 8B Instant — chosen for its free tier and fast response times, since OpenAI's API requires paid credits
-
-\- \*\*Grounding mechanism:\*\* the prompt instructs the model to respond with an exact marker string (`NOT\_FOUND\_IN\_DOCUMENTS`) when the retrieved context doesn't answer the question, which the app then converts into a clear "I don't know based on the available documents" message with no sources shown. This was more reliable than trying to pattern-match every possible way the model might phrase a refusal.
-
-\- \*\*UI:\*\* Streamlit, with a chat-style interface
-
-
-
-\## 5. Bonus features implemented
-
-
-
-\- \*\*Live PDF upload:\*\* users can upload an additional PDF during a session, which gets chunked and embedded on the fly and merged with the base 324-chunk index for that session only (the original saved index on disk is never modified)
-
-\- \*\*Multi-turn conversational memory:\*\* follow-up questions like "what about FF?" are first rewritten into a self-contained question using recent chat history before retrieval, and the final answer prompt also includes recent conversation turns for context
-
-
-
-\## 6. Known limitations / what I'd improve with more time
-
-
-
-\- \*\*Fixed-size chunking is crude.\*\* It occasionally cuts a chunk in the middle of a table or a numbered list, which can lose some structure that would help the model. With more time, I'd try structure-aware chunking (e.g. splitting on section numbers like "5.2", "5.3" which appear throughout these rulebooks).
-
-\- \*\*No re-ranking step.\*\* Retrieval currently just takes the top-4 nearest chunks by embedding similarity. Sometimes a highly relevant chunk ranks 5th or 6th and gets missed. A re-ranking step (using a cross-encoder or asking the LLM to re-score retrieved chunks) would likely improve accuracy.
-
-\- \*\*The overlapping rulebooks (older vs newer UG rule books) sometimes retrieve near-duplicate chunks\*\*, taking up slots in the top-4 that could have gone to a more diverse set of sources. Deduplicating near-identical chunks across documents would help.
-
-\- \*\*Citation highlighting is partial.\*\* The app shows the full retrieved chunk text as supporting evidence, but doesn't highlight the exact sentence(s) the answer was based on within that chunk. A cleaner version would ask the model to also return the specific span of text it used, and highlight only that.
-
-\- \*\*No answer caching.\*\* Every question re-runs embedding + search + an LLM call, even if asked before in the same session. Caching repeated questions would reduce latency and API calls.
-
-
-
-\## 7. Testing performed
-
-
-
-I tested the system with:
-
-\- Direct factual questions answerable from a single document (e.g. "What grade do I get if caught with a mobile phone during an exam?" → correctly answered "FR grade" with the right source)
-
-\- Questions requiring synthesis across two documents (e.g. comparing FR vs DX grades)
-
-\- Out-of-scope questions (e.g. "What is the capital of France?") to confirm the system correctly refuses rather than hallucinating
-
-\- A live-uploaded hostel rules PDF, to confirm the upload feature retrieves correctly from newly added documents without breaking retrieval from the original 6
-
+- **Live document upload**
+  - A hostel rules PDF was uploaded during runtime to verify that newly added documents could be retrieved correctly while maintaining access to the original academic knowledge base.
