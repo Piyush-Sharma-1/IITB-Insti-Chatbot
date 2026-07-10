@@ -40,11 +40,6 @@ A RAG chatbot to answer questions about IIT Bombay’s academic rules, grading s
 
 ### 1. Clone the repository
 
-```bash
-git clone <repository-url>
-cd <repository-folder>
-```
-
 ### 2. Create a virtual environment
 
 **Windows (PowerShell)**
@@ -61,7 +56,7 @@ python -m venv venv
 source venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 3. Install the required  dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -81,7 +76,7 @@ pip install pypdf sentence-transformers faiss-cpu openai streamlit
 [System.Environment]::SetEnvironmentVariable("GROQ_API_KEY","your-api-key","User")
 ```
 
-Restart your terminal after setting the environment variable.
+Restart the  terminal after setting the environment variable.
 
 ### 5. Add the source documents
 
@@ -129,9 +124,9 @@ The knowledge base consists of six official IIT Bombay academic documents:
 
 ## How It Works
 
-1. PDF documents are converted into plain text.
+1. PDF files are converted into plain text.
 2. The extracted text is divided into overlapping chunks.
-3. Each chunk is embedded using the `all-MiniLM-L6-v2` model.
+3. Each chunk is embedded by `all-MiniLM-L6-v2` model.
 4. FAISS retrieves the most relevant chunks for a user query.
-5. The retrieved context is provided to Llama 3.1 8B Instant through the Groq API.
-6. The assistant generates an answer grounded in the retrieved documents and cites the supporting sources.
+5. The retrieved context is sent to Llama 3.1 8B Instant through the Groq API.
+6. The assistant then generates a response using the retrieved documents, citing the sources that back up the answer.
