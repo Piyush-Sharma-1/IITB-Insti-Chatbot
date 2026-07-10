@@ -1,6 +1,6 @@
 # IITB Insti-Assist — Academic Assistant
 
-A Retrieval-Augmented Generation (RAG) chatbot that answers questions about IIT Bombay's academic rules, grading system, examination policies, and academic calendar using official institute documents.
+A RAG chatbot to answer questions about IIT Bombay’s academic rules, grading system, examination policies and academic calendar using official institute documents.
 
 ## Live Demo
 
@@ -8,12 +8,12 @@ A Retrieval-Augmented Generation (RAG) chatbot that answers questions about IIT 
 
 ## Features
 
-- Answers academic queries using six official IIT Bombay documents.
-- Uses Retrieval-Augmented Generation (RAG) to generate grounded responses.
-- Refuses to answer when the requested information is not present in the available documents.
-- Displays the supporting source document(s) used to generate each answer.
-- Supports uploading additional PDF documents during a session for temporary retrieval.
-- Maintains multi-turn conversation context by rewriting follow-up questions into standalone queries.
+- Answers academic queries with six official IIT Bombay documents.
+- It uses Retrieval Augmented Generation (RAG) to provide grounded factually correct answers.
+- Does not answer when the requested information is not in the available documents.
+- Indicates the document(s) from the source that support each answer.
+- Allows uploading other PDF documents during an active session for temporary retrieval.
+- 
 
 ## Project Structure
 
@@ -85,7 +85,7 @@ Restart your terminal after setting the environment variable.
 
 ### 5. Add the source documents
 
-Place the official IIT Bombay PDF documents inside the `docs/` directory.
+Place all the  official IIT Bombay PDF documents inside the `docs/` directory.
 
 ### 6. Build the knowledge base
 
