@@ -2,7 +2,7 @@
 
 **Live demo:** https://iitb-insti-chatbot-gq5etbjf5lh6tqegthr4px.streamlit.app/
 
-## 1. Chosen scope and why
+## 1. Chosen scope and why ?
 
 I opted for the **Academic Assistant** scope — course registration, grading policy, exam rules, academic calendar. In fact, I was going to build the Hostel & Campus Life assistant first but when I looked at the data available for each, I decided to change my mind. The academic rulebooks were discovered to have a lot more precise, lookup-type content (specific grade codes like DD/FF/FR/DX, exact attendance percentages and specific disciplinary actions for academic malpractice) than hostel documents, which were more spread out across individual hostel pages and less uniform in format. This type of factual content works better with RAG, because we can check the retrieved answers directly against the official documents.
 
@@ -19,7 +19,7 @@ I have used six official IIT Bombay documents, all of which were directly obtain
 
 
 
-## 3. Chunking strategy and why
+## 3. Chunking strategy and why ?
 
 I used a fixed-size character chunking strategy with **1000 characters per chunk** and an **overlap of 200 characters** between consecutive chunks.
 
