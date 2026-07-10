@@ -33,8 +33,9 @@ def load_resources():
     index = faiss.read_index("vector_index.faiss")
     with open("chunks_metadata.pkl", "rb") as f:
         chunks = pickle.load(f)
+    api_key = st.secrets.get("GROQ_API_KEY", os.environ.get("GROQ_API_KEY"))
     client = OpenAI(
-        api_key=os.environ["GROQ_API_KEY"],
+        api_key=api_key,
         base_url="https://api.groq.com/openai/v1"
     )
     return model, index, chunks, client
