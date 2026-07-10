@@ -19,15 +19,21 @@ A Retrieval-Augmented Generation (RAG) chatbot that answers questions about IIT 
 
 ```text
 .
-├── app.py
-├── extract_text.py
-├── chunk_documents.py
-├── build_index.py
+├── .streamlit/
+│   └── config.toml
 ├── docs/
-├── extracted_text/
-├── chunks/
-├── faiss_index/
-└── requirements.txt
+├── .gitignore
+├── README.md
+├── WRITEUP.md
+├── app.py
+├── build_index.py
+├── chunk_documents.py
+├── chunks.json
+├── chunks_metadata.pkl
+├── extract_text.py
+├── query_rag.py
+├── requirements.txt
+└── vector_index.faiss
 ```
 
 ## Setup
