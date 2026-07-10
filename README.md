@@ -1,74 +1,131 @@
-\# IITB Insti-Assist — Academic Assistant
+# IITB Insti-Assist — Academic Assistant
 
+A Retrieval-Augmented Generation (RAG) chatbot that answers questions about IIT Bombay's academic rules, grading system, examination policies, and academic calendar using official institute documents.
 
+## Live Demo
 
-A RAG-powered assistant that answers questions about IIT Bombay's academic rules, grading system, and exam policies, grounded in official institute documents.
+**https://iitb-insti-chatbot-gq5etbjf5lh6tqegthr4px.streamlit.app/**
 
+## Features
 
+- Answers academic queries using six official IIT Bombay documents.
+- Uses Retrieval-Augmented Generation (RAG) to generate grounded responses.
+- Refuses to answer when the requested information is not present in the available documents.
+- Displays the supporting source document(s) used to generate each answer.
+- Supports uploading additional PDF documents during a session for temporary retrieval.
+- Maintains multi-turn conversation context by rewriting follow-up questions into standalone queries.
 
-\## Features
+## Project Structure
 
-\- Answers questions using 6 official IITB academic documents (grading, registration, exam malpractice rules, calendar)
+```text
+.
+├── app.py
+├── extract_text.py
+├── chunk_documents.py
+├── build_index.py
+├── docs/
+├── extracted_text/
+├── chunks/
+├── faiss_index/
+└── requirements.txt
+```
 
-\- Refuses to answer when information isn't in the documents
+## Setup
 
-\- Shows source documents for every answer
+### 1. Clone the repository
 
-\- Supports uploading additional PDFs during a session
+```bash
+git clone <repository-url>
+cd <repository-folder>
+```
 
-\- Multi-turn chat with follow-up question understanding
+### 2. Create a virtual environment
 
+**Windows (PowerShell)**
 
-
-\## Setup
-
-
-
-1\. Clone this repo and navigate into it
-
-2\. Create a virtual environment:
-
+```powershell
 python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
 
-venv\\Scripts\\Activate.ps1
+**Linux/macOS**
 
-3\. Install dependencies:
+```bash
+python -m venv venv
+source venv/bin/activate
+```
 
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+If `requirements.txt` is unavailable:
+
+```bash
 pip install pypdf sentence-transformers faiss-cpu openai streamlit
+```
 
-4\. Set your Groq API key as an environment variable:
+### 4. Configure the Groq API key
 
-\[System.Environment]::SetEnvironmentVariable("GROQ\_API\_KEY", "your-key-here", "User")
+**Windows (PowerShell)**
 
-5\. Place source PDFs in the `docs/` folder
+```powershell
+[System.Environment]::SetEnvironmentVariable("GROQ_API_KEY","your-api-key","User")
+```
 
-6\. Run the ingestion pipeline:
+Restart your terminal after setting the environment variable.
 
-python extract\_text.py
+### 5. Add the source documents
 
-python chunk\_documents.py
+Place the official IIT Bombay PDF documents inside the `docs/` directory.
 
-python build\_index.py
+### 6. Build the knowledge base
 
-7\. Launch the app:
+```bash
+python extract_text.py
+python chunk_documents.py
+python build_index.py
+```
 
+### 7. Run the application
+
+```bash
 streamlit run app.py
+```
 
+The application will open in your browser at:
 
+```
+http://localhost:8501
+```
 
-\## Tech stack
+## Technology Stack
 
-\- Embeddings: sentence-transformers (all-MiniLM-L6-v2)
+- **Programming Language:** Python
+- **PDF Extraction:** `pypdf`
+- **Embedding Model:** `sentence-transformers` (`all-MiniLM-L6-v2`)
+- **Vector Database:** FAISS (`IndexFlatL2`)
+- **LLM:** Groq API using **Llama 3.1 8B Instant**
+- **Frontend:** Streamlit
 
-\- Vector search: FAISS
+## Data Sources
 
-\- LLM: Groq API (Llama 3.1 8B Instant)
+The knowledge base consists of six official IIT Bombay academic documents:
 
-\- UI: Streamlit
+- `ugrulebook.pdf`
+- `Academic_Calendar_2026-27_FINAL.pdf`
+- `grading.pdf`
+- `M.Tech_. MPP. M.Des_. MBA Rules_0.pdf`
+- `procedures201521July.pdf`
+- `punishments201521July.pdf`
 
+## How It Works
 
-
-\## Data sources
-
-6 official IIT Bombay academic documents covering grading policy, UG/PG rules, exam malpractice procedures, and the academic calendar.
-
+1. PDF documents are converted into plain text.
+2. The extracted text is divided into overlapping chunks.
+3. Each chunk is embedded using the `all-MiniLM-L6-v2` model.
+4. FAISS retrieves the most relevant chunks for a user query.
+5. The retrieved context is provided to Llama 3.1 8B Instant through the Groq API.
+6. The assistant generates an answer grounded in the retrieved documents and cites the supporting sources.
